@@ -21,13 +21,14 @@ import (
 )
 
 //CreateUsers insert one to DB
-func CreateDirectory(res http.ResponseWriter, req *http.Request) {
+func CreateFolder(res http.ResponseWriter, req *http.Request) {
 	// Declare Variable
 	var directory models.Directory
 	json.NewDecoder(req.Body).Decode(&directory)
-	f, err := os.Create(directory.Path)
+	// f, err := os.Create(directory.Path)
+	err := os.MkdirAll(directory.Path, 777)
 	utils.ErrorHandler(err)
-	defer f.Close()
+	// defer f.Close()
 	utils.WriteResult(res, nil, directory.Path+" Created")
 }
 

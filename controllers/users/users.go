@@ -147,7 +147,7 @@ func Auth(res http.ResponseWriter, req *http.Request) {
 		userauth.Auth = authkey.String()
 
 		collection.FindOneAndUpdate(context.TODO(), bson.M{"username": user.Username}, bson.D{{Key: "$set", Value: userauth}})
-		utils.WriteResult(res, bson.M{"key": authkey}, "Access Allowed")
+		utils.WriteResult(res, bson.M{"key": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
 	} else {
 		utils.WriteResult(res, nil, "Access Denied")
 	}

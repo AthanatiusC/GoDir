@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+type Application struct {
+	ID        primitive.ObjectID `json:"Id" bson:"_id,omitempty"`
+	ServerDir string
+	AppName   string
+}
+
 //Meta Model
 type Meta struct {
 	Updated primitive.DateTime
@@ -38,6 +44,7 @@ type Users struct {
 	Password   string
 	Auth       string
 	Photo      string
+	RootPath   string
 	FormatTime time.Time
 	Updated    primitive.Timestamp
 	Created    primitive.Timestamp

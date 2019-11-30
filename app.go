@@ -30,6 +30,7 @@ func main() {
 
 	router.HandleFunc("/directory", directory.GetDirectory).Methods("POST")
 	router.HandleFunc("/directory/delete", directory.DeleteDirectory).Methods("POST")
+	router.HandleFunc("/directory/create", directory.CreateFolder).Methods("POST")
 
 	log.Println("Connection Successfull! Api running at http://localhost:9000")
 	defer log.Println("Connection Closed")
