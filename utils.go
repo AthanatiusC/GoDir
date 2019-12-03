@@ -43,8 +43,8 @@ func ErrorHandler(err error) bool {
 }
 
 type Payload struct {
-	Message string `json:message`
-	Data    interface{}
+	Message string      `json:"message"`
+	Data    interface{} `json:"returned_data"`
 }
 
 func WriteResult(res http.ResponseWriter, data interface{}, message string) {
