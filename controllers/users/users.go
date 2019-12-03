@@ -11,7 +11,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
-	// "log"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -25,6 +25,7 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 
 	//Decode Request
 	err := json.NewDecoder(req.Body).Decode(&model)
+	log.Println(model)
 
 	//Connect DB
 	db := utils.ConnectMongoDB()
@@ -56,9 +57,15 @@ func GetAllUsers(res http.ResponseWriter, req *http.Request) {
 	var all []models.Users
 
 	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("auth_key")
+	authkey := req.Header.Get("key")
 
 	uid, _ := primitive.ObjectIDFromHex(userid)
+
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(res, nil, "Access Allowed")
+		return
+	}
 
 	if VerifyOwnership(uid, authkey) {
 		//Connect DB
@@ -94,8 +101,10 @@ func VerifyOwnership(id primitive.ObjectID, auth_key string) bool {
 
 	if auth_key != "" {
 		if auth_key != model.Auth {
+			log.Println(auth_key + "	" + model.Auth)
 			return false
 		} else if auth_key == model.Auth {
+			log.Println("True")
 			return true
 		}
 	}

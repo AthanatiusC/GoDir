@@ -48,10 +48,11 @@ type Payload struct {
 }
 
 func WriteResult(res http.ResponseWriter, data interface{}, message string) {
-	res.Header().Set("Access-Control-Allow-Origin", "*")
-	res.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token")
+	res.Header().Add("Access-Control-Allow-Origin", "*")
+	(res).Header().Set("Access-Control-Allow-Headers", "*")
+	(res).Header().Set("Access-Control-Allow-Methods", "*")
 	res.Header().Set("Content-Type", "Application/JSON")
+
 	var payload Payload
 	payload.Message = message
 	payload.Data = data
@@ -59,5 +60,5 @@ func WriteResult(res http.ResponseWriter, data interface{}, message string) {
 
 	res.WriteHeader(http.StatusAccepted)
 	res.Write([]byte(result))
-	// fmt.Println(message)
+	fmt.Println(message)
 }

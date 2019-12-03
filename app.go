@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/http"
 
-	"encoding/json"
+	// "encoding/json"
 	directory "github.com/athanatius/godir/controllers/directory"
 	users "github.com/athanatius/godir/controllers/users"
-	"github.com/gorilla/handlers"
+	// "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	// "github.com/rs/cors"
 )
 
 var largePool chan func()
@@ -17,42 +18,39 @@ var largePool chan func()
 func main() {
 	utils.ConnectMongoDB() //Test Connection
 	router := mux.NewRouter()
-	headers := handlers.AllowedHeaders([]string{"X-Requested-With"})
-	origins := handlers.AllowedOrigins([]string{"*"})
-	methods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	// headers := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	// origins := handlers.AllowedOrigins([]string{"*"})
+	// methods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
-	router.Headers("Content-Type", "application/json")
+	router.Headers("Content-Type", "Application/JSON")
 
-	router.HandleFunc("/users", users.GetAllUsers).Methods("GET")
-	router.HandleFunc("/users", users.CreateUsers).Methods("POST")
-	router.HandleFunc("/auth", users.Auth).Methods("POST")
-	router.HandleFunc("/users/{id}", users.DeleteUsers).Methods("DELETE")
+	prefix := router.PathPrefix("/v1/").Subrouter()
+	prefix.HandleFunc("/users", users.GetAllUsers).Methods("GET", "OPTIONS")
+	prefix.HandleFunc("/users", users.CreateUsers).Methods("POST", "OPTIONS")
+	prefix.HandleFunc("/auth", users.Auth).Methods("POST", "OPTIONS")
+	prefix.HandleFunc("/users/{id}", users.DeleteUsers).Methods("DELETE", "OPTIONS")
 
-	router.HandleFunc("/directory", directory.GetDirectory).Methods("POST")
-	router.HandleFunc("/directory/delete", directory.DeleteDirectory).Methods("POST")
-	router.HandleFunc("/directory/create", directory.CreateFolder).Methods("POST")
+	prefix.HandleFunc("/directory", directory.GetDirectory).Methods("POST", "OPTIONS")
+	prefix.HandleFunc("/directory/delete", directory.DeleteDirectory).Methods("POST", "OPTIONS")
+	prefix.HandleFunc("/directory/create", directory.CreateFolder).Methods("POST", "OPTIONS")
+	prefix.HandleFunc("/directory/upload", directory.UploadFile).Methods("POST", "OPTIONS")
+	prefix.HandleFunc("/directory/rename", directory.RenameFolder).Methods("PUT", "OPTIONS")
+	prefix.HandleFunc("/directory/download", directory.DownloadFile).Methods("GET", "OPTIONS")
+	// prefix.HandleFunc("/directory/zip", directory.ZipFile).Methods("PUT", "OPTIONS")
 
+	router.Use(mux.CORSMethodMiddleware(router))
 	log.Println("Connection Successfull! Api running at http://localhost:9000")
 	defer log.Println("Connection Closed")
-	log.Panic(http.ListenAndServe(":9000", handlers.CORS(origins, headers, methods)(router)))
+
+	log.Fatal(http.ListenAndServe(":9000", router))
 }
 
-func handler1(w http.ResponseWriter, r *http.Request) {
-	var job struct{ URL string }
-
-	if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func corsHandler(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			//handle preflight in here
+		} else {
+			h.ServeHTTP(w, r)
+		}
 	}
-
-	go func() {
-		// Block until there are fewer than cap(largePool) light-work
-		// goroutines running.
-		// largePool <- struct{}{}
-		defer func() { <-largePool }() // Let everyone that we are done
-
-		http.Get(job.URL)
-	}()
-
-	w.WriteHeader(http.StatusAccepted)
 }
