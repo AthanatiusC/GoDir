@@ -42,8 +42,8 @@ func CreateFolder(res http.ResponseWriter, req *http.Request) {
 }
 
 type RenamePayload struct {
-	Oldpath string
-	Newpath string
+	Oldpath string `json:"old_path"`
+	Newpath string `json:"new_path"`
 }
 
 func RenameFolder(res http.ResponseWriter, req *http.Request) {
@@ -55,10 +55,12 @@ func RenameFolder(res http.ResponseWriter, req *http.Request) {
 	var rename RenamePayload
 	json.NewDecoder(req.Body).Decode(&rename)
 	err := os.Rename(rename.Oldpath, rename.Newpath)
-	utils.ErrorHandler(err)
-
-	utils.WriteResult(req, res, nil, "Successfully Renamed")
-
+	isErr := utils.ErrorHandler(err)
+	if isErr {
+		utils.WriteResult(req, res, nil, "Action Failed")
+	} else {
+		utils.WriteResult(req, res, nil, "Successfully Renamed")
+	}
 }
 
 //GetAllUsers return res json Users model
@@ -104,7 +106,7 @@ func GetDirectory(res http.ResponseWriter, req *http.Request) {
 
 func DeleteDirectory(res http.ResponseWriter, req *http.Request) {
 	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("key")
+	authkey := req.Header.Get("auth_key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
 
 	if utils.VerifyOwnership(uid, authkey) {
@@ -125,9 +127,13 @@ func DeleteDirectory(res http.ResponseWriter, req *http.Request) {
 }
 
 func DownloadFile(res http.ResponseWriter, req *http.Request) {
-
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(req, res, nil, "Access Allowed")
+		return
+	}
 	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("key")
+	authkey := req.Header.Get("auth_key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
 
 	if utils.VerifyOwnership(uid, authkey) {
@@ -175,7 +181,7 @@ func DownloadFile(res http.ResponseWriter, req *http.Request) {
 
 func UploadFile(res http.ResponseWriter, req *http.Request) {
 	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("key")
+	authkey := req.Header.Get("auth_key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
 
 	if utils.VerifyOwnership(uid, authkey) {

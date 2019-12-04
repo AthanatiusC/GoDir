@@ -11,7 +11,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
-	// "log"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -71,8 +71,9 @@ func GetAllUsers(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	authkey := req.Header.Get("auth_key")
+	log.Println(authkey)
 	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
 
 	if utils.VerifyOwnership(uid, authkey) {
@@ -147,7 +148,7 @@ func Auth(res http.ResponseWriter, req *http.Request) {
 		userauth.Auth = authkey.String()
 
 		collection.FindOneAndUpdate(context.TODO(), bson.M{"username": user.Username}, bson.D{{Key: "$set", Value: userauth}})
-		utils.WriteResult(req, res, bson.M{"key": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
+		utils.WriteResult(req, res, bson.M{"Auth": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
 	} else {
 		utils.WriteResult(req, res, nil, "Access Denied")
 	}

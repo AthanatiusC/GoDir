@@ -29,12 +29,6 @@ func WriteLog(req *http.Request, message string) {
 	log.Println(" [ " + ip + ":" + Port + " ] " + message)
 }
 
-func OnErr(err error) {
-	if err != nil {
-
-	}
-}
-
 func ConnectMongoDB() *mongo.Database {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -69,6 +63,7 @@ func VerifyOwnership(id primitive.ObjectID, auth_key string) bool {
 
 	if auth_key != "" {
 		if auth_key != model.Auth {
+			log.Println(auth_key + "	" + model.Auth)
 			return false
 		} else if auth_key == model.Auth {
 			return true

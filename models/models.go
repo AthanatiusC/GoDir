@@ -42,7 +42,7 @@ type Users struct {
 	Email      string             `json:"email"`
 	Username   string             `json:"username"`
 	Password   string             `json:"password"`
-	Auth       string             `json:"authentication_key"`
+	Auth       string             `json:"auth_key" bson:"auth,omitempty"`
 	Photo      string             `json:"picture_url"`
 	RootPath   string             `json:"root_path"`
 	FormatTime time.Time          `json:"format_time"`
