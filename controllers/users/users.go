@@ -11,7 +11,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
-	"log"
+	// "log"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,9 +23,14 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 	var model models.Users
 	var model2 models.Users
 
+	// userid := req.Header.Get("user_id")
+	// authkey := req.Header.Get("key")
+	// uid, _ := primitive.ObjectIDFromHex(userid)
+
+	// if utils.VerifyOwnership(uid, authkey) {
+
 	//Decode Request
 	err := json.NewDecoder(req.Body).Decode(&model)
-	log.Println(model)
 
 	//Connect DB
 	db := utils.ConnectMongoDB()
@@ -33,7 +38,7 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 	//Loop column
 	db.Collection("users").FindOne(context.TODO(), bson.M{"username": model.Username}).Decode(&model2)
 	if len(model2.Name) != 0 {
-		utils.WriteResult(res, nil, "User Already Exist!")
+		utils.WriteResult(req, res, nil, "User Already Exist!")
 		return
 	}
 
@@ -47,7 +52,11 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 
 	//Return Res
 	utils.ErrorHandler(err)
-	utils.WriteResult(res, nil, "User Successfully Created!")
+	utils.WriteResult(req, res, nil, "User Successfully Created!")
+	// } else {
+	// 	utils.WriteResult(res, nil, "Access Denied ")
+	// 	return
+	// }
 }
 
 //GetAllUsers return res json Users model
@@ -56,18 +65,17 @@ func GetAllUsers(res http.ResponseWriter, req *http.Request) {
 	var model models.Users
 	var all []models.Users
 
-	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("key")
-
-	uid, _ := primitive.ObjectIDFromHex(userid)
-
 	switch req.Method {
 	case "OPTIONS":
-		utils.WriteResult(res, nil, "Access Allowed")
+		utils.WriteResult(req, res, nil, "Access Allowed")
 		return
 	}
 
-	if VerifyOwnership(uid, authkey) {
+	userid := req.Header.Get("user_id")
+	authkey := req.Header.Get("key")
+	uid, _ := primitive.ObjectIDFromHex(userid)
+
+	if utils.VerifyOwnership(uid, authkey) {
 		//Connect DB
 		db := utils.ConnectMongoDB()
 		col, err := db.Collection("users").Find(context.TODO(), bson.M{})
@@ -80,35 +88,17 @@ func GetAllUsers(res http.ResponseWriter, req *http.Request) {
 		}
 
 		if len(all) == 0 {
-			utils.WriteResult(res, nil, "User Collumn Empty")
+			utils.WriteResult(req, res, nil, "User Collumn Empty")
 			return
 		}
 
 		//Return Res
 		utils.ErrorHandler(err)
-		utils.WriteResult(res, all, "Sucessfully Returned "+strconv.Itoa(len(all))+" Users!")
+		utils.WriteResult(req, res, all, "Sucessfully Returned "+strconv.Itoa(len(all))+" Users!")
 	} else {
-		utils.WriteResult(res, nil, "Access Denied ")
+		utils.WriteResult(req, res, nil, "Access Denied ")
 		return
 	}
-}
-
-func VerifyOwnership(id primitive.ObjectID, auth_key string) bool {
-	var model models.Users
-
-	db := utils.ConnectMongoDB()
-	db.Collection("users").FindOne(context.TODO(), bson.M{"_id": id}).Decode(&model)
-
-	if auth_key != "" {
-		if auth_key != model.Auth {
-			log.Println(auth_key + "	" + model.Auth)
-			return false
-		} else if auth_key == model.Auth {
-			log.Println("True")
-			return true
-		}
-	}
-	return false
 }
 
 func DeleteUsers(res http.ResponseWriter, req *http.Request) {
@@ -118,7 +108,7 @@ func DeleteUsers(res http.ResponseWriter, req *http.Request) {
 	utils.ErrorHandler(err)
 
 	authkey := req.Header.Get("auth_key")
-	if VerifyOwnership(objid, authkey) {
+	if utils.VerifyOwnership(objid, authkey) {
 		db := utils.ConnectMongoDB()
 
 		collection := db.Collection("users")
@@ -126,13 +116,13 @@ func DeleteUsers(res http.ResponseWriter, req *http.Request) {
 		utils.ErrorHandler(err)
 
 		if deleteResult.DeletedCount == 0 {
-			utils.WriteResult(res, nil, "User not found")
+			utils.WriteResult(req, res, nil, "User not found")
 			return
 		}
 
-		utils.WriteResult(res, deleteResult.DeletedCount, "User Deleted!")
+		utils.WriteResult(req, res, deleteResult.DeletedCount, "User Deleted!")
 	} else {
-		utils.WriteResult(res, nil, "Access Denied ")
+		utils.WriteResult(req, res, nil, "User Not Found ")
 		return
 	}
 }
@@ -149,6 +139,7 @@ func Auth(res http.ResponseWriter, req *http.Request) {
 
 	// password:= hashAndSalt()
 	ismatch := comparePasswords(userauth.Password, []byte(user.Password))
+	// log.Println(userauth.Password + "	" + user.Password)
 
 	if ismatch == true {
 
@@ -156,9 +147,9 @@ func Auth(res http.ResponseWriter, req *http.Request) {
 		userauth.Auth = authkey.String()
 
 		collection.FindOneAndUpdate(context.TODO(), bson.M{"username": user.Username}, bson.D{{Key: "$set", Value: userauth}})
-		utils.WriteResult(res, bson.M{"key": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
+		utils.WriteResult(req, res, bson.M{"key": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
 	} else {
-		utils.WriteResult(res, nil, "Access Denied")
+		utils.WriteResult(req, res, nil, "Access Denied")
 	}
 }
 

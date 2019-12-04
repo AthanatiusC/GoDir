@@ -1,14 +1,33 @@
 package utils
 
 import (
+	models "github.com/athanatius/godir/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
+	"os"
+	// "strings"
 )
+
+func WriteLog(req *http.Request, message string) {
+	ip, Port := GetIPAdress(req)
+	f, err := os.OpenFile("GoDir.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 777)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Println(" [ " + ip + ":" + Port + " ] " + message)
+}
 
 func OnErr(err error) {
 	if err != nil {
@@ -42,12 +61,28 @@ func ErrorHandler(err error) bool {
 	}
 }
 
+func VerifyOwnership(id primitive.ObjectID, auth_key string) bool {
+	var model models.Users
+
+	db := ConnectMongoDB()
+	db.Collection("users").FindOne(context.TODO(), bson.M{"_id": id}).Decode(&model)
+
+	if auth_key != "" {
+		if auth_key != model.Auth {
+			return false
+		} else if auth_key == model.Auth {
+			return true
+		}
+	}
+	return false
+}
+
 type Payload struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"returned_data"`
 }
 
-func WriteResult(res http.ResponseWriter, data interface{}, message string) {
+func WriteResult(req *http.Request, res http.ResponseWriter, data interface{}, message string) {
 	res.Header().Add("Access-Control-Allow-Origin", "*")
 	(res).Header().Set("Access-Control-Allow-Headers", "*")
 	(res).Header().Set("Access-Control-Allow-Methods", "*")
@@ -61,4 +96,37 @@ func WriteResult(res http.ResponseWriter, data interface{}, message string) {
 	res.WriteHeader(http.StatusAccepted)
 	res.Write([]byte(result))
 	fmt.Println(message)
+	WriteLog(req, message)
+}
+
+func GetIPAdress(req *http.Request) (ip string, port string) {
+	// fmt.Fprintf(w, "<h1>static file server</h1><p><a href='./static'>folder</p></a>")
+
+	ip, port, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		//return nil, fmt.Errorf("userip: %q is not IP:port", req.RemoteAddr)
+
+		// fmt.Fprintf(w, "userip: %q is not IP:port", req.RemoteAddr)
+	}
+
+	userIP := net.ParseIP(ip)
+	if userIP == nil {
+		//return nil, fmt.Errorf("userip: %q is not IP:port", req.RemoteAddr)
+		// fmt.Fprintf(w, "userip: %q is not IP:port", req.RemoteAddr)
+		// return
+	}
+
+	// This will only be defined when site is accessed via non-anonymous proxy
+	// and takes precedence over RemoteAddr
+	// Header.Get is case-insensitive
+	// forward := req.Header.Get("X-Forwarded-For")
+
+	if ip == "::1" {
+		ip = "localhost"
+	}
+
+	// fmt.Println("IP: " + ip)
+	// fmt.Println("Port: " + port)
+	// fmt.Println("Forwarded for: " + forward)
+	return ip, port
 }
