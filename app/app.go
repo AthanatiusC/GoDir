@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/athanatius/godir"
+	"github.com/AthanatiusC/godir"
 	"log"
 	"net/http"
 
 	// "encoding/json"
-	directory "github.com/athanatius/godir/controllers/directory"
-	users "github.com/athanatius/godir/controllers/users"
+	directory "github.com/AthanatiusC/godir/controllers/directory"
+	users "github.com/AthanatiusC/godir/controllers/users"
 	// "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	// "github.com/rs/cors"

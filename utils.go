@@ -1,7 +1,7 @@
 package utils
 
 import (
-	models "github.com/athanatius/godir/models"
+	models "github.com/AthanatiusC/godir/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

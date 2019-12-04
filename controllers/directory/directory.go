@@ -2,8 +2,8 @@ package directory
 
 import (
 	"encoding/json"
-	utils "github.com/athanatius/godir"
-	models "github.com/athanatius/godir/models"
+	utils "github.com/AthanatiusC/godir"
+	models "github.com/AthanatiusC/godir/models"
 	// "github.com/gorilla/mux"
 	"os"
 
