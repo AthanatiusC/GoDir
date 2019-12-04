@@ -95,33 +95,14 @@ func WriteResult(req *http.Request, res http.ResponseWriter, data interface{}, m
 }
 
 func GetIPAdress(req *http.Request) (ip string, port string) {
-	// fmt.Fprintf(w, "<h1>static file server</h1><p><a href='./static'>folder</p></a>")
-
 	ip, port, err := net.SplitHostPort(req.RemoteAddr)
-	if err != nil {
-		//return nil, fmt.Errorf("userip: %q is not IP:port", req.RemoteAddr)
-
-		// fmt.Fprintf(w, "userip: %q is not IP:port", req.RemoteAddr)
-	}
+	ErrorHandler(err)
 
 	userIP := net.ParseIP(ip)
 	if userIP == nil {
-		//return nil, fmt.Errorf("userip: %q is not IP:port", req.RemoteAddr)
-		// fmt.Fprintf(w, "userip: %q is not IP:port", req.RemoteAddr)
-		// return
-	}
-
-	// This will only be defined when site is accessed via non-anonymous proxy
-	// and takes precedence over RemoteAddr
-	// Header.Get is case-insensitive
-	// forward := req.Header.Get("X-Forwarded-For")
-
-	if ip == "::1" {
+		return "Unknown", "0000"
+	} else if ip == "::1" {
 		ip = "localhost"
 	}
-
-	// fmt.Println("IP: " + ip)
-	// fmt.Println("Port: " + port)
-	// fmt.Println("Forwarded for: " + forward)
 	return ip, port
 }

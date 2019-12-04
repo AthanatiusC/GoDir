@@ -47,67 +47,91 @@ type RenamePayload struct {
 }
 
 func RenameFolder(res http.ResponseWriter, req *http.Request) {
+	userid := req.Header.Get("user_id")
+	authkey := req.Header.Get("auth_key")
+	uid, _ := primitive.ObjectIDFromHex(userid)
+
 	switch req.Method {
 	case "OPTIONS":
 		utils.WriteResult(req, res, nil, "Access Allowed")
 		return
 	}
-	var rename RenamePayload
-	json.NewDecoder(req.Body).Decode(&rename)
-	err := os.Rename(rename.Oldpath, rename.Newpath)
-	isErr := utils.ErrorHandler(err)
-	if isErr {
-		utils.WriteResult(req, res, nil, "Action Failed")
+
+	if utils.VerifyOwnership(uid, authkey) {
+		var rename RenamePayload
+		json.NewDecoder(req.Body).Decode(&rename)
+		err := os.Rename(rename.Oldpath, rename.Newpath)
+		isErr := utils.ErrorHandler(err)
+		if isErr {
+			utils.WriteResult(req, res, nil, "Action Failed")
+		} else {
+			utils.WriteResult(req, res, nil, "Successfully Renamed")
+		}
 	} else {
-		utils.WriteResult(req, res, nil, "Successfully Renamed")
+		utils.WriteResult(req, res, nil, "Access Denied")
 	}
 }
 
 //GetAllUsers return res json Users model
 func GetDirectory(res http.ResponseWriter, req *http.Request) {
+	//Declare Variable
+	var model models.Directory
+	var file models.Files
+	var files []models.Files
+
+	userid := req.Header.Get("user_id")
+	authkey := req.Header.Get("auth_key")
+	uid, _ := primitive.ObjectIDFromHex(userid)
+
 	switch req.Method {
 	case "OPTIONS":
 		utils.WriteResult(req, res, nil, "Access Allowed")
 		return
 	}
 
-	//Declare Variable
-	var model models.Directory
-	var file models.Files
-	var files []models.Files
+	if utils.VerifyOwnership(uid, authkey) {
 
-	//Decode Request
-	err := json.NewDecoder(req.Body).Decode(&model)
-	// utils.ErrorHandler(err)
+		//Decode Request
+		err := json.NewDecoder(req.Body).Decode(&model)
+		// utils.ErrorHandler(err)
 
-	list, err := ioutil.ReadDir(model.Path)
-	if err != nil {
-		log.Println(err)
-		utils.WriteResult(req, res, nil, "Directory Not Found!")
-		return
-	}
-	for _, val := range list {
-		file.Size = val.Size()
-		file.Name = val.Name()
-		file.Path = strings.Join([]string{model.Path, val.Name()}, "/")
-		file.LastModified = val.ModTime()
-		file.FileMode = val.Mode()
-		if val.IsDir() {
-			file.Type = "Folder"
-		} else {
-			format := strings.Split(val.Name(), ".")
-			file.Type = format[len(format)-1]
+		list, err := ioutil.ReadDir(model.Path)
+		if err != nil {
+			log.Println(err)
+			utils.WriteResult(req, res, nil, "Directory Not Found!")
+			return
 		}
-		files = append(files, file)
-		// http.DetectContentType()
+		for _, val := range list {
+			file.Size = val.Size()
+			file.Name = val.Name()
+			file.Path = strings.Join([]string{model.Path, val.Name()}, "/")
+			file.LastModified = val.ModTime()
+			file.FileMode = val.Mode()
+			if val.IsDir() {
+				file.Type = "Folder"
+			} else {
+				format := strings.Split(val.Name(), ".")
+				file.Type = format[len(format)-1]
+			}
+			files = append(files, file)
+			// http.DetectContentType()
+		}
+		utils.WriteResult(req, res, files, "Returned "+strconv.Itoa(len(files))+" Object")
+	} else {
+		utils.WriteResult(req, res, nil, "Access Denied")
 	}
-	utils.WriteResult(req, res, files, "Returned "+strconv.Itoa(len(files))+" Object")
 }
 
 func DeleteDirectory(res http.ResponseWriter, req *http.Request) {
 	userid := req.Header.Get("user_id")
 	authkey := req.Header.Get("auth_key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
+
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(req, res, nil, "Access Allowed")
+		return
+	}
 
 	if utils.VerifyOwnership(uid, authkey) {
 		switch req.Method {
@@ -127,14 +151,15 @@ func DeleteDirectory(res http.ResponseWriter, req *http.Request) {
 }
 
 func DownloadFile(res http.ResponseWriter, req *http.Request) {
+	userid := req.Header.Get("user_id")
+	authkey := req.Header.Get("auth_key")
+	uid, _ := primitive.ObjectIDFromHex(userid)
+
 	switch req.Method {
 	case "OPTIONS":
 		utils.WriteResult(req, res, nil, "Access Allowed")
 		return
 	}
-	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("auth_key")
-	uid, _ := primitive.ObjectIDFromHex(userid)
 
 	if utils.VerifyOwnership(uid, authkey) {
 		if req.Header.Get("Path") == "" {
@@ -183,6 +208,12 @@ func UploadFile(res http.ResponseWriter, req *http.Request) {
 	userid := req.Header.Get("user_id")
 	authkey := req.Header.Get("auth_key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
+
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(req, res, nil, "Access Allowed")
+		return
+	}
 
 	if utils.VerifyOwnership(uid, authkey) {
 		req.ParseMultipartForm(1000)
