@@ -48,3 +48,9 @@ type Users struct {
 	FormatTime time.Time          `json:"format_time"`
 	MetaData   Meta               `json:"meta_data"`
 }
+
+// type Terminal struct {
+// 	CWD       `json:"current_working_directory"`
+// 	Commands  `json:"command"`
+// 	Arguments `json:"command_arguments"`
+// }

@@ -2,6 +2,7 @@ package utils
 
 import (
 	models "github.com/AthanatiusC/godir/models"
+	"github.com/tomasen/realip"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +19,10 @@ import (
 )
 
 func WriteLog(req *http.Request, message string) {
-	ip, Port := GetIPAdress(req)
+	// ip, Port := GetIPAdress(req)
+
+	ip := realip.FromRequest(req)
+
 	f, err := os.OpenFile("GoDir.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 777)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -26,7 +30,8 @@ func WriteLog(req *http.Request, message string) {
 	defer f.Close()
 
 	log.SetOutput(f)
-	log.Println(" [ " + ip + ":" + Port + " ] " + message)
+	log.Println(" [ " + ip + "] " + message)
+	// log.Println(" [ " + ip + ":" + Port + " ] " + message)
 }
 
 func ConnectMongoDB() *mongo.Database {
