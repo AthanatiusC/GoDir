@@ -23,11 +23,11 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 	var model models.Users
 	var model2 models.Users
 
-	// userid := req.Header.Get("user_id")
-	// authkey := req.Header.Get("key")
-	// uid, _ := primitive.ObjectIDFromHex(userid)
+	userid := req.Header.Get("user_id")
+	authkey := req.Header.Get("key")
+	uid, _ := primitive.ObjectIDFromHex(userid)
 
-	// if utils.VerifyOwnership(uid, authkey) {
+	if utils.VerifyOwnership(uid, authkey) {
 
 	//Decode Request
 	err := json.NewDecoder(req.Body).Decode(&model)
@@ -53,10 +53,10 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 	//Return Res
 	utils.ErrorHandler(err)
 	utils.WriteResult(req, res, nil, "User Successfully Created!")
-	// } else {
-	// 	utils.WriteResult(res, nil, "Access Denied ")
-	// 	return
-	// }
+	} else {
+		utils.WriteResult(res, nil, "Access Denied ")
+		return
+	}
 }
 
 //GetAllUsers return res json Users model
