@@ -74,6 +74,11 @@ func RenameFolder(res http.ResponseWriter, req *http.Request) {
 
 //GetAllUsers return res json Users model
 func GetDirectory(res http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(req, res, nil, "Access Allowed")
+		return
+	}
 	//Declare Variable
 	var model models.Directory
 	var file models.Files
@@ -82,12 +87,6 @@ func GetDirectory(res http.ResponseWriter, req *http.Request) {
 	userid := req.Header.Get("user_id")
 	authkey := req.Header.Get("auth_key")
 	uid, _ := primitive.ObjectIDFromHex(userid)
-
-	switch req.Method {
-	case "OPTIONS":
-		utils.WriteResult(req, res, nil, "Access Allowed")
-		return
-	}
 
 	if utils.VerifyOwnership(uid, authkey) {
 

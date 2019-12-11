@@ -54,7 +54,7 @@ func CreateUsers(res http.ResponseWriter, req *http.Request) {
 	utils.ErrorHandler(err)
 	utils.WriteResult(req, res, nil, "User Successfully Created!")
 	} else {
-		utils.WriteResult(res, nil, "Access Denied ")
+		utils.WriteResult(req,res, nil, "Access Denied ")
 		return
 	}
 }
@@ -103,6 +103,11 @@ func GetAllUsers(res http.ResponseWriter, req *http.Request) {
 }
 
 func DeleteUsers(res http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(req, res, nil, "Access Allowed")
+		return
+	}
 	raw_param := mux.Vars(req)
 	id := raw_param["id"]
 	objid, err := primitive.ObjectIDFromHex(id)
@@ -129,6 +134,12 @@ func DeleteUsers(res http.ResponseWriter, req *http.Request) {
 }
 
 func Auth(res http.ResponseWriter, req *http.Request) {
+
+	switch req.Method {
+	case "OPTIONS":
+		utils.WriteResult(req, res, nil, "Access Allowed")
+		return
+	}
 	var user models.Users
 	var userauth models.Users
 	err := json.NewDecoder(req.Body).Decode(&user)
@@ -148,9 +159,14 @@ func Auth(res http.ResponseWriter, req *http.Request) {
 		userauth.Auth = authkey.String()
 
 		collection.FindOneAndUpdate(context.TODO(), bson.M{"username": user.Username}, bson.D{{Key: "$set", Value: userauth}})
-		utils.WriteResult(req, res, bson.M{"Auth": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
+		utils.WriteResult(req, res, userauth, "Access Allowed")
+		return
+		// utils.WriteResult(req, res, bson.M{"Auth": authkey, "RootPath": userauth.RootPath, "Id": userauth.ID}, "Access Allowed")
 	} else {
-		utils.WriteResult(req, res, nil, "Access Denied")
+		res.WriteHeader(http.StatusUnauthorized)
+		res.Write([]byte("Unauthorized"))
+		return
+		// utils.WriteResult(req, res, nil, "Access Denied")
 	}
 }
 

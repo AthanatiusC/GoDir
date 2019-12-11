@@ -20,8 +20,8 @@ type Meta struct {
 
 //Directory Model
 type Directory struct {
-	Name string  `json:"directory_name"`
-	Path string  `json:"requested_path"`
+	Name string  `json:"name"`
+	Path string  `json:"path"`
 	File []Files `json:"file_list"`
 }
 
