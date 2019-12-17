@@ -60,6 +60,15 @@ func ErrorHandler(err error) bool {
 	}
 }
 
+func IsExists(path string) bool {
+	_, err := os.Stat(path)
+	ErrorHandler(err)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 func VerifyOwnership(id primitive.ObjectID, auth_key string) bool {
 	var model models.Users
 

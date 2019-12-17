@@ -139,6 +139,9 @@ func DeleteDirectory(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		var directory models.Directory
+		if utils.IsExists(directory.Path) {
+			utils.WriteResult(req, res, nil, "File/Folder not found!")
+		}
 		json.NewDecoder(req.Body).Decode(&directory)
 		err := os.RemoveAll(directory.Path)
 		utils.ErrorHandler(err)
@@ -204,15 +207,15 @@ func DownloadFile(res http.ResponseWriter, req *http.Request) {
 }
 
 func UploadFile(res http.ResponseWriter, req *http.Request) {
-	userid := req.Header.Get("user_id")
-	authkey := req.Header.Get("auth_key")
-	uid, _ := primitive.ObjectIDFromHex(userid)
-
 	switch req.Method {
 	case "OPTIONS":
 		utils.WriteResult(req, res, nil, "Access Allowed")
 		return
 	}
+
+	userid := req.Header.Get("user_id")
+	authkey := req.Header.Get("auth_key")
+	uid, _ := primitive.ObjectIDFromHex(userid)
 
 	if utils.VerifyOwnership(uid, authkey) {
 		req.ParseMultipartForm(1000)
@@ -241,62 +244,3 @@ func UploadFile(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
-
-// func Unzip(res http.ResponseWriter, req *http.Request) error {
-// 	Path := req.Header.Get("Path")
-// 	Name := req.Header.Get("Name")
-// 	r, err := zip.OpenReader(src)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer func() {
-// 		if err := r.Close(); err != nil {
-// 			panic(err)
-// 		}
-// 	}()
-
-// 	os.MkdirAll(Path, 0755)
-
-// 	// Closure to address file descriptors issue with all the deferred .Close() methods
-// 	extractAndWriteFile := func(f *zip.File) error {
-// 		rc, err := f.Open()
-// 		if err != nil {
-// 			return err
-// 		}
-// 		defer func() {
-// 			if err := rc.Close(); err != nil {
-// 				panic(err)
-// 			}
-// 		}()
-
-// 		if f.FileInfo().IsDir() {
-// 			os.MkdirAll(strings.Join([]string{Path, Name}, "/"), f.Mode())
-// 		} else {
-// 			os.MkdirAll(filepath.Dir(path), f.Mode())
-// 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-// 			if err != nil {
-// 				return err
-// 			}
-// 			defer func() {
-// 				if err := f.Close(); err != nil {
-// 					panic(err)
-// 				}
-// 			}()
-
-// 			_, err = io.Copy(f, rc)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		}
-// 		return nil
-// 	}
-
-// 	for _, f := range r.File {
-// 		err := extractAndWriteFile(f)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
